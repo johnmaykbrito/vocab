@@ -33,12 +33,11 @@
       text-transform: uppercase;
     }
 
-    /* Language switcher */
     .lang-switcher {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 3rem;
+      margin-bottom: 1rem;
     }
 
     .lang-btn {
@@ -56,15 +55,74 @@
       transition: all 0.2s ease;
     }
 
-    .lang-btn:hover {
-      border-color: rgba(0,0,0,0.3);
-      color: #3a3a38;
-    }
+    .lang-btn:hover { border-color: rgba(0,0,0,0.3); color: #3a3a38; }
 
     .lang-btn.active {
       background: #1a1a18;
       color: #f5f3ee;
       border-color: #1a1a18;
+    }
+
+    .quiz-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 3rem;
+    }
+
+    .quiz-btn {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 99px;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: transparent;
+      color: #888780;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .quiz-btn:hover { border-color: rgba(0,0,0,0.3); color: #3a3a38; }
+
+    .quiz-btn.active {
+      background: #888780;
+      color: #f5f3ee;
+      border-color: #888780;
+    }
+
+    .quiz-btn#btn-all.active {
+      background: #1a1a18;
+      color: #f5f3ee;
+      border-color: #1a1a18;
+    }
+
+    .quiz-size-input {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      width: 44px;
+      text-align: center;
+      padding: 5px 6px;
+      border-radius: 99px;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: transparent;
+      color: #888780;
+      outline: none;
+      transition: all 0.2s ease;
+      -moz-appearance: textfield;
+    }
+
+    .quiz-size-input::-webkit-outer-spin-button,
+    .quiz-size-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .quiz-size-input:focus {
+      border-color: rgba(0,0,0,0.35);
+      color: #3a3a38;
     }
 
     .grid {
@@ -89,13 +147,8 @@
       transition: transform 0.55s cubic-bezier(.4,0,.2,1);
     }
 
-    .card-wrap:hover .card:not(.flipped) {
-      transform: rotateY(6deg);
-    }
-
-    .card.flipped {
-      transform: rotateY(180deg);
-    }
+    .card-wrap:hover .card:not(.flipped) { transform: rotateY(6deg); }
+    .card.flipped { transform: rotateY(180deg); }
 
     .face {
       position: absolute;
@@ -149,7 +202,6 @@
       line-height: 1.65;
     }
 
-    /* Cores por nível */
     .n1 .nivel      { background: #E1F5EE; color: #0F6E56; }
     .n1 .nivel-back { color: #0F6E56; }
     .n2 .nivel      { background: #E6F1FB; color: #185FA5; }
@@ -175,6 +227,14 @@
       .lang-btn { border-color: rgba(255,255,255,0.15); color: #888780; }
       .lang-btn:hover { border-color: rgba(255,255,255,0.35); color: #c8c6c0; }
       .lang-btn.active { background: #e8e6e0; color: #1a1a18; border-color: #e8e6e0; }
+
+      .quiz-btn { border-color: rgba(255,255,255,0.15); color: #888780; }
+      .quiz-btn:hover { border-color: rgba(255,255,255,0.35); color: #c8c6c0; }
+      .quiz-btn.active { background: #888780; color: #1a1a18; border-color: #888780; }
+      .quiz-btn#btn-all.active { background: #e8e6e0; color: #1a1a18; border-color: #e8e6e0; }
+
+      .quiz-size-input { border-color: rgba(255,255,255,0.15); color: #888780; }
+      .quiz-size-input:focus { border-color: rgba(255,255,255,0.35); color: #c8c6c0; }
 
       .n1 .nivel      { background: #085041; color: #9FE1CB; }
       .n1 .nivel-back { color: #9FE1CB; }
@@ -202,15 +262,26 @@
     <button class="lang-btn" onclick="setLang('fr')">FR</button>
   </div>
 
+  <div class="quiz-controls">
+    <button class="quiz-btn active" id="btn-all" onclick="setMode('all')">Todos</button>
+    <button class="quiz-btn" id="btn-quiz" onclick="setMode('quiz')">Sortear</button>
+    <input type="number" id="quiz-size-input" class="quiz-size-input" min="1" value="3" title="Quantidade de cards sorteados" />
+  </div>
+
   <div class="grid" id="cards"></div>
 
   <script>
+    /* ─── CONFIGURAÇÃO ─────────────────────────────────────────────────────
+       QUIZ_SIZE define o valor inicial do sorteio.
+       Pode ser alterado aqui ou diretamente pelo campo numérico na tela.
+    ─────────────────────────────────────────────────────────────────────── */
+    let QUIZ_SIZE = 3;
+
     /* ─── DADOS ────────────────────────────────────────────────────────────
        Adicione palavras livremente em cada lista.
        Cada entrada: { nivel, classe (n1–n6), palavra, definicao }
        As listas são independentes — não são traduções entre si.
     ─────────────────────────────────────────────────────────────────────── */
-
     const db = {
 
       pt: [
@@ -229,21 +300,21 @@
       ],
 
       en: [
-        { nivel: "Universal",    classe: "n1", palavra: "water",
+        { nivel: "Universal",   classe: "n1", palavra: "water",
           definicao: "A transparent, odourless liquid essential to all known life. H₂O." },
-        { nivel: "Everyday",     classe: "n2", palavra: "mortgage",
+        { nivel: "Everyday",    classe: "n2", palavra: "mortgage",
           definicao: "A loan secured against a property, repaid with interest over an agreed period." },
-        { nivel: "Functional",   classe: "n3", palavra: "liability",
+        { nivel: "Functional",  classe: "n3", palavra: "liability",
           definicao: "A legal obligation or debt for which a person or entity is responsible." },
-        { nivel: "Functional",   classe: "n3", palavra: "badonkadonk",
-          definicao: "Slang for a large, round buttocks. Popularised by country music and hip-hop in the 2000s; widely understood, occasionally used humorously. Not universal, but far from obscure." },
-        { nivel: "Specialised",  classe: "n4", palavra: "tort",
+        { nivel: "Functional",  classe: "n3", palavra: "badonkadonk",
+          definicao: "Slang for a large, round buttocks. Popularised by country music and hip-hop in the 2000s; widely understood, occasionally used humorously." },
+        { nivel: "Specialised", classe: "n4", palavra: "tort",
           definicao: "A civil wrong that causes harm, giving rise to legal liability independent of contract." },
-        { nivel: "Literary",     classe: "n5", palavra: "susurrus",
+        { nivel: "Literary",    classe: "n5", palavra: "susurrus",
           definicao: "A soft murmuring or whispering sound; a gentle, continuous rustle." },
-        { nivel: "Literary",     classe: "n5", palavra: "lest",
-          definicao: " Literary. Conjunction meaning \"for fear that.\" Rare in speech; survives in formal writing, legal texts, and literature (\"lest we forget\"). Most native speakers recognise it but would never use it naturally." },
-        { nivel: "Rare",         classe: "n6", palavra: "defenestrate",
+        { nivel: "Literary",    classe: "n5", palavra: "lest",
+          definicao: "Conjunction meaning \"for fear that.\" Rare in speech; survives in formal writing, legal texts, and literature (\"lest we forget\")." },
+        { nivel: "Rare",        classe: "n6", palavra: "defenestrate",
           definicao: "To throw someone or something out of a window; historically used in political contexts." }
       ],
 
@@ -251,7 +322,7 @@
         { nivel: "Universel",   classe: "n1", palavra: "eau",
           definicao: "Substance liquide, incolore et inodore, indispensable à toute forme de vie. H₂O." },
         { nivel: "Universel",   classe: "n1", palavra: "chemin",
-          definicao: "Voie permettant d'aller d'un lieu à un autre; aussi employé au figuré. Présent dans la langue courante, la littérature et l'expression enfantine. Connu de tous les francophones." },
+          definicao: "Voie permettant d'aller d'un lieu à un autre; aussi employé au figuré. Connu de tous les francophones." },
         { nivel: "Quotidien",   classe: "n2", palavra: "loyer",
           definicao: "Somme versée périodiquement par un locataire à son propriétaire en échange d'un logement." },
         { nivel: "Fonctionnel", classe: "n3", palavra: "insolvabilité",
@@ -273,6 +344,28 @@
     };
 
     let currentLang = 'pt';
+    let currentMode = 'all';
+
+    const sizeInput = document.getElementById('quiz-size-input');
+
+    sizeInput.addEventListener('change', () => {
+      const val = parseInt(sizeInput.value, 10);
+      if (!isNaN(val) && val >= 1) {
+        QUIZ_SIZE = val;
+        if (currentMode === 'quiz') renderCards();
+      } else {
+        sizeInput.value = QUIZ_SIZE;
+      }
+    });
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
 
     function setLang(lang) {
       currentLang = lang;
@@ -283,10 +376,23 @@
       renderCards();
     }
 
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btn-all').classList.toggle('active', mode === 'all');
+      document.getElementById('btn-quiz').classList.toggle('active', mode === 'quiz');
+      renderCards();
+    }
+
     function renderCards() {
       const container = document.getElementById('cards');
       container.innerHTML = '';
-      db[currentLang].forEach(d => {
+
+      let lista = db[currentLang];
+      if (currentMode === 'quiz') {
+        lista = shuffle(lista).slice(0, QUIZ_SIZE);
+      }
+
+      lista.forEach(d => {
         const wrap = document.createElement('div');
         wrap.className = `card-wrap ${d.classe}`;
         wrap.innerHTML = `
