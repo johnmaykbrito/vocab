@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards — Vocabulário Brasileiro</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #f5f3ee;
+      color: #1a1a18;
+      min-height: 100vh;
+      padding: 3rem 1.5rem;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      color: #3a3a38;
+      margin-bottom: 0.4rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888780;
+      margin-bottom: 3rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card-wrap {
+      perspective: 900px;
+      height: 210px;
+      cursor: pointer;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(.4,0,.2,1);
+    }
+
+    .card-wrap:hover .card:not(.flipped) {
+      transform: rotateY(6deg);
+    }
+
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.4rem;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .front { background: #ffffff; }
+    .back  { background: #f0ede6; transform: rotateY(180deg); }
+
+    .nivel {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-weight: 700;
+    }
+
+    .palavra {
+      font-size: 24px;
+      font-weight: 400;
+      color: #1a1a18;
+      text-align: center;
+      font-style: italic;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #b4b2a9;
+      margin-top: 12px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.04em;
+    }
+
+    .nivel-back {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .definicao {
+      font-size: 13px;
+      color: #444441;
+      text-align: center;
+      line-height: 1.65;
+    }
+
+    /* Cores por nível */
+    .n1 .nivel      { background: #E1F5EE; color: #0F6E56; }
+    .n1 .nivel-back { color: #0F6E56; }
+    .n2 .nivel      { background: #E6F1FB; color: #185FA5; }
+    .n2 .nivel-back { color: #185FA5; }
+    .n3 .nivel      { background: #FAEEDA; color: #854F0B; }
+    .n3 .nivel-back { color: #854F0B; }
+    .n4 .nivel      { background: #EEEDFE; color: #534AB7; }
+    .n4 .nivel-back { color: #534AB7; }
+    .n5 .nivel      { background: #FAECE7; color: #993C1D; }
+    .n5 .nivel-back { color: #993C1D; }
+    .n6 .nivel      { background: #ebebeb; color: #5F5E5A; }
+    .n6 .nivel-back { color: #5F5E5A; }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: #1e1e1c; color: #e8e6e0; }
+      h1 { color: #c8c6c0; }
+      .front { background: #2a2a28; }
+      .back  { background: #242422; }
+      .face  { border-color: rgba(255,255,255,0.07); }
+      .palavra  { color: #e8e6e0; }
+      .definicao { color: #b4b2a9; }
+      .hint { color: #5f5e5a; }
+
+      .n1 .nivel      { background: #085041; color: #9FE1CB; }
+      .n1 .nivel-back { color: #9FE1CB; }
+      .n2 .nivel      { background: #0C447C; color: #B5D4F4; }
+      .n2 .nivel-back { color: #B5D4F4; }
+      .n3 .nivel      { background: #633806; color: #FAC775; }
+      .n3 .nivel-back { color: #FAC775; }
+      .n4 .nivel      { background: #3C3489; color: #CECBF6; }
+      .n4 .nivel-back { color: #CECBF6; }
+      .n5 .nivel      { background: #712B13; color: #F5C4B3; }
+      .n5 .nivel-back { color: #F5C4B3; }
+      .n6 .nivel      { background: #333331; color: #D3D1C7; }
+      .n6 .nivel-back { color: #D3D1C7; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Flashcards de Vocabulário</h1>
+  <p class="subtitle">Português Brasileiro · por frequência de exposição</p>
+
+  <div class="grid" id="cards"></div>
+
+  <script>
+    const dados = [
+      {
+        nivel: "Universal",
+        classe: "n1",
+        palavra: "água",
+        definicao: "Substância líquida, incolor e inodora, essencial à vida. H₂O."
+      },
+      {
+        nivel: "Cotidiana",
+        classe: "n2",
+        palavra: "parcela",
+        definicao: "Cada uma das partes em que se divide um pagamento a ser feito ao longo do tempo."
+      },
+      {
+        nivel: "Funcional",
+        classe: "n3",
+        palavra: "inadimplência",
+        definicao: "Estado de quem não cumpre uma obrigação financeira no prazo acordado."
+      },
+      {
+        nivel: "Especializada",
+        classe: "n4",
+        palavra: "subsunção",
+        definicao: "Ato de incluir um caso concreto sob uma norma jurídica geral; enquadramento legal."
+      },
+      {
+        nivel: "Literária",
+        classe: "n5",
+        palavra: "vetusto",
+        definicao: "Muito antigo; que tem grande idade; arcaico ou envelhecido."
+      },
+      {
+        nivel: "Rara",
+        classe: "n6",
+        palavra: "meirinho",
+        definicao: "Antigo oficial de justiça incumbido de executar ordens judiciais e realizar citações."
+      }
+    ];
+
+    const container = document.getElementById('cards');
+
+    dados.forEach(d => {
+      const wrap = document.createElement('div');
+      wrap.className = `card-wrap ${d.classe}`;
+      wrap.innerHTML = `
+        <div class="card">
+          <div class="face front">
+            <span class="nivel">${d.nivel}</span>
+            <span class="palavra">${d.palavra}</span>
+          </div>
+          <div class="face back">
+            <span class="nivel-back">${d.nivel}</span>
+            <p class="definicao">${d.definicao}</p>
+          </div>
+        </div>
+      `;
+      wrap.addEventListener('click', () => {
+        wrap.querySelector('.card').classList.toggle('flipped');
+      });
+      container.appendChild(wrap);
+    });
+  </script>
+
+</body>
+</html>
