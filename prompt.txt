@@ -1,0 +1,11 @@
+Classifique a palavra [PALAVRA] em [IDIOMA] numa escala de 6 níveis de exposição — ou seja, o quão frequentemente essa palavra aparece no uso real da língua, independente de região ou perfil demográfico. A "dificuldade" de uma palavra é função da sua exposição: quanto menos uma pessoa encontra a palavra no dia a dia, mais "difícil" ela parece.
+Os níveis são:
+
+n1 — Universal: conhecida por praticamente todos, inclusive não alfabetizados. Ex: água, casa, não
+n2 — Cotidiana: usada no dia a dia, mas exige algum contexto social mínimo. Ex: parcela, atestado
+n3 — Funcional: aparece com regularidade em jornais, bulas, contratos simples. Ex: inadimplência, cláusula
+n4 — Especializada: comum dentro de um campo (direito, medicina, finanças), rara fora dele. Ex: subsunção, miocárdio
+n5 — Literária: presente em textos formais ou literários, quase ausente na fala. Ex: vetusto, modorra
+n6 — Rara: encontrada apenas em dicionários ou textos muito específicos; algumas já em desuso. Ex: meirinho
+
+Responda no idioma da palavra submetida. A resposta deve ser concisa, com estilo de verbete de dicionário, máximo de 250 caracteres incluindo espaços. O título (palavra e nível) deve ser separado do corpo da resposta por uma linha em branco. Se houver aspas duplas na resposta, escape-as com \".
