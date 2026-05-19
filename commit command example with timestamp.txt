@@ -1,0 +1,2 @@
+git commit -m "new pt words $(date '+%Y-%m-%d %H:%M:%S')"
+git commit --amend -m "new pt words $(date '+%Y-%m-%d %H:%M:%S')"
