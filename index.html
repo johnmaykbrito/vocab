@@ -406,11 +406,7 @@
         value="3"
         title="Quantidade de cards sorteados"
       />
-      <button
-        class="quiz-btn"
-        id="btn-play"
-        onclick="window.open('play.html', '_blank')"
-      >
+      <button class="quiz-btn" id="btn-play" onclick="openPlay()">
         ▶ Play
       </button>
     </div>
@@ -1296,6 +1292,15 @@
           .getElementById("btn-quiz")
           .classList.toggle("active", mode === "quiz");
         renderCards();
+      }
+
+      function openPlay() {
+        const pool = shuffle(db[currentLang]);
+        const words = pool.slice(0, 20); // send up to 20; crossword will use what it can place
+        const payload = encodeURIComponent(
+          JSON.stringify({ lang: currentLang, words }),
+        );
+        window.open(`play.html#${payload}`, "_blank");
       }
 
       function renderCards() {

@@ -3,9 +3,944 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Play</title>
+    <title>Crossword — Vocabulário</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: Georgia, "Times New Roman", serif;
+        background: #f5f3ee;
+        color: #1a1a18;
+        min-height: 100vh;
+        padding: 2rem 1rem 4rem;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 1.4rem;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        color: #3a3a38;
+        margin-bottom: 0.3rem;
+      }
+
+      .subtitle {
+        text-align: center;
+        font-size: 0.78rem;
+        color: #888780;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 1.8rem;
+      }
+
+      #error-msg {
+        text-align: center;
+        color: #993c1d;
+        font-size: 0.9rem;
+        margin-top: 3rem;
+      }
+
+      /* ── layout ── */
+      .game-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        justify-content: center;
+        align-items: flex-start;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      /* ── grid ── */
+      #grid-container {
+        flex: 0 0 auto;
+        overflow-x: auto;
+      }
+
+      #crossword-grid {
+        border-collapse: collapse;
+        border-spacing: 0;
+        user-select: none;
+      }
+
+      #crossword-grid td {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #bbb9b2;
+        background: #fff;
+        position: relative;
+        cursor: default;
+      }
+
+      #crossword-grid td.black {
+        background: #1a1a18;
+        border-color: #1a1a18;
+        cursor: default;
+      }
+
+      #crossword-grid td.active-word {
+        background: #e6f1fb;
+      }
+
+      #crossword-grid td.active-cell {
+        background: #aed4f5;
+      }
+
+      #crossword-grid td.correct {
+        background: #e1f5ee;
+      }
+
+      .cell-number {
+        position: absolute;
+        top: 2px;
+        left: 3px;
+        font-family: "Courier New", monospace;
+        font-size: 9px;
+        font-weight: 700;
+        color: #555;
+        line-height: 1;
+        pointer-events: none;
+      }
+
+      .cell-letter {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        font-weight: 600;
+        color: #1a1a18;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+
+      /* ── clues ── */
+      .clues-wrap {
+        flex: 1 1 260px;
+        min-width: 220px;
+        max-width: 360px;
+      }
+
+      .clue-section {
+        margin-bottom: 1.4rem;
+      }
+
+      .clue-section h2 {
+        font-family: "Courier New", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #888780;
+        margin-bottom: 0.6rem;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #ddd9d0;
+      }
+
+      .clue-item {
+        display: flex;
+        gap: 8px;
+        padding: 5px 6px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+        margin-bottom: 2px;
+      }
+
+      .clue-item:hover {
+        background: #ece9e2;
+      }
+      .clue-item.active {
+        background: #e6f1fb;
+      }
+      .clue-item.correct {
+        background: #e1f5ee;
+        color: #0f6e56;
+      }
+
+      .clue-num {
+        font-family: "Courier New", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        min-width: 22px;
+        color: #888780;
+        padding-top: 1px;
+      }
+
+      .clue-text {
+        font-size: 13px;
+        line-height: 1.5;
+        color: #3a3a38;
+      }
+
+      .clue-item.correct .clue-text {
+        color: #0f6e56;
+      }
+
+      /* ── congrats ── */
+      #congrats {
+        display: none;
+        text-align: center;
+        margin-top: 2rem;
+        padding: 1.2rem 2rem;
+        background: #e1f5ee;
+        border-radius: 12px;
+        color: #0f6e56;
+        font-size: 1.1rem;
+        letter-spacing: 0.04em;
+      }
+
+      /* ── new game btn ── */
+      #btn-new {
+        display: block;
+        margin: 1.5rem auto 0;
+        font-family: "Courier New", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 7px 20px;
+        border-radius: 99px;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        background: transparent;
+        color: #888780;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      #btn-new:hover {
+        border-color: rgba(0, 0, 0, 0.3);
+        color: #3a3a38;
+      }
+
+      /* ── hidden real input for mobile keyboard ── */
+      #hidden-input {
+        position: fixed;
+        opacity: 0;
+        pointer-events: none;
+        width: 1px;
+        height: 1px;
+        top: 0;
+        left: 0;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1e1e1c;
+          color: #e8e6e0;
+        }
+        h1 {
+          color: #c8c6c0;
+        }
+        #crossword-grid td {
+          background: #2a2a28;
+          border-color: #444;
+        }
+        #crossword-grid td.black {
+          background: #e8e6e0;
+          border-color: #e8e6e0;
+        }
+        #crossword-grid td.active-word {
+          background: #0c447c;
+        }
+        #crossword-grid td.active-cell {
+          background: #185fa5;
+        }
+        #crossword-grid td.correct {
+          background: #085041;
+        }
+        .cell-letter {
+          color: #e8e6e0;
+        }
+        .cell-number {
+          color: #aaa;
+        }
+        .clue-item:hover {
+          background: #2a2a28;
+        }
+        .clue-item.active {
+          background: #0c447c;
+        }
+        .clue-item.correct {
+          background: #085041;
+          color: #9fe1cb;
+        }
+        .clue-section h2 {
+          color: #888780;
+          border-color: #333;
+        }
+        .clue-text {
+          color: #c8c6c0;
+        }
+        .clue-item.correct .clue-text {
+          color: #9fe1cb;
+        }
+        #congrats {
+          background: #085041;
+          color: #9fe1cb;
+        }
+      }
+    </style>
   </head>
   <body>
-    <h1>Hello World</h1>
+    <h1>Crossword · Vocabulário</h1>
+    <p class="subtitle" id="subtitle">Carregando…</p>
+    <div id="error-msg"></div>
+
+    <input
+      id="hidden-input"
+      type="text"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="characters"
+      spellcheck="false"
+    />
+
+    <div class="game-wrap">
+      <div id="grid-container"></div>
+      <div class="clues-wrap">
+        <div class="clue-section">
+          <h2>Horizontal</h2>
+          <div id="clues-across"></div>
+        </div>
+        <div class="clue-section">
+          <h2>Vertical</h2>
+          <div id="clues-down"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="congrats">🎉 Parabéns — puzzle completo!</div>
+    <button id="btn-new" onclick="location.reload()">↺ Novo puzzle</button>
+
+    <script>
+      // ── 1. LOAD DATA FROM HASH ──────────────────────────────────────────────
+      let words = [];
+      let lang = "pt";
+
+      try {
+        const raw = decodeURIComponent(window.location.hash.slice(1));
+        const payload = JSON.parse(raw);
+        words = payload.words || [];
+        lang = payload.lang || "pt";
+      } catch (e) {
+        // fallback demo words for testing
+        words = [
+          {
+            palavra: "argúcia",
+            definicao:
+              "Agudeza de espírito, sutileza de raciocínio ou perspicácia.",
+          },
+          {
+            palavra: "séquito",
+            definicao:
+              "Conjunto de pessoas que acompanham uma figura importante.",
+          },
+          {
+            palavra: "lépido",
+            definicao: "Que se move com agilidade, vivaz ou alegre.",
+          },
+          {
+            palavra: "estorvar",
+            definicao:
+              "Causar obstáculo, embaraçar ou atrapalhar algo ou alguém.",
+          },
+          {
+            palavra: "remedar",
+            definicao: "Imitar gestos ou voz de alguém, geralmente com troça.",
+          },
+          {
+            palavra: "antipirético",
+            definicao: "Medicamento que atua no combate e redução da febre.",
+          },
+          {
+            palavra: "pareidolia",
+            definicao: "Perceber formas familiares em objetos aleatórios.",
+          },
+          {
+            palavra: "pince",
+            definicao: "Óculos antigo sem hastes ajustado sobre o nariz.",
+          },
+        ];
+      }
+
+      const subtitleMap = {
+        pt: "Português Brasileiro · palavras cruzadas",
+        en: "English · crossword puzzle",
+        fr: "Français · mots croisés",
+      };
+      document.getElementById("subtitle").textContent =
+        subtitleMap[lang] || subtitleMap.pt;
+
+      // ── 2. NORMALISE WORDS ──────────────────────────────────────────────────
+      // Strip accents and spaces for grid placement; keep original for display
+      function normalise(str) {
+        return str
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z]/g, "")
+          .toUpperCase();
+      }
+
+      // Build candidate list: normalised key must be ≥ 3 chars
+      const candidates = words
+        .map((w) => ({
+          word: normalise(w.palavra),
+          clue: w.definicao,
+          display: w.palavra,
+        }))
+        .filter((w) => w.word.length >= 3)
+        .sort((a, b) => b.word.length - a.word.length); // longest first helps placement
+
+      if (candidates.length < 4) {
+        document.getElementById("error-msg").textContent =
+          "Não há palavras suficientes para gerar um puzzle. Volte e selecione mais cards.";
+        document.getElementById("btn-new").style.display = "none";
+        throw new Error("not enough words");
+      }
+
+      // ── 3. CROSSWORD ENGINE ─────────────────────────────────────────────────
+      const GRID_SIZE = 21; // large enough canvas
+      const ACROSS = "across",
+        DOWN = "down";
+
+      function makeGrid() {
+        return Array.from({ length: GRID_SIZE }, () =>
+          Array(GRID_SIZE).fill(null),
+        );
+        // null = empty, letter = placed
+      }
+
+      function canPlace(grid, word, row, col, dir) {
+        const len = word.length;
+        // check before and after
+        if (dir === ACROSS) {
+          if (col < 0 || col + len > GRID_SIZE) return false;
+          if (col > 0 && grid[row][col - 1] !== null) return false;
+          if (col + len < GRID_SIZE && grid[row][col + len] !== null)
+            return false;
+          for (let i = 0; i < len; i++) {
+            const c = grid[row][col + i];
+            if (c !== null && c !== word[i]) return false;
+            if (c === null) {
+              // cell above/below must be empty (unless we're intersecting)
+              const above = row > 0 ? grid[row - 1][col + i] : null;
+              const below = row < GRID_SIZE - 1 ? grid[row + 1][col + i] : null;
+              if (above !== null || below !== null) return false;
+            }
+          }
+        } else {
+          if (row < 0 || row + len > GRID_SIZE) return false;
+          if (row > 0 && grid[row - 1][col] !== null) return false;
+          if (row + len < GRID_SIZE && grid[row + len][col] !== null)
+            return false;
+          for (let i = 0; i < len; i++) {
+            const c = grid[row + i][col];
+            if (c !== null && c !== word[i]) return false;
+            if (c === null) {
+              const left = col > 0 ? grid[row + i][col - 1] : null;
+              const right = col < GRID_SIZE - 1 ? grid[row + i][col + 1] : null;
+              if (left !== null || right !== null) return false;
+            }
+          }
+        }
+        return true;
+      }
+
+      function placeWord(grid, word, row, col, dir) {
+        const g = grid.map((r) => [...r]);
+        for (let i = 0; i < word.length; i++) {
+          if (dir === ACROSS) g[row][col + i] = word[i];
+          else g[row + i][col] = word[i];
+        }
+        return g;
+      }
+
+      function findPlacements(grid, word, placedWords) {
+        const placements = [];
+        for (const pw of placedWords) {
+          for (let pi = 0; pi < pw.word.length; pi++) {
+            for (let wi = 0; wi < word.length; wi++) {
+              if (pw.word[pi] !== word[wi]) continue;
+              const newDir = pw.dir === ACROSS ? DOWN : ACROSS;
+              let row, col;
+              if (pw.dir === ACROSS) {
+                row = pw.row - wi;
+                col = pw.col + pi;
+              } else {
+                row = pw.row + pi;
+                col = pw.col - wi;
+              }
+              if (canPlace(grid, word, row, col, newDir)) {
+                placements.push({ row, col, dir: newDir });
+              }
+            }
+          }
+        }
+        return placements;
+      }
+
+      function buildCrossword(candidates, target = 14) {
+        // Try multiple seeds and pick best result
+        let best = null;
+
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+          let grid = makeGrid();
+          const placed = [];
+
+          // Place first word in centre
+          const first = shuffled[0];
+          const startRow = Math.floor(GRID_SIZE / 2);
+          const startCol = Math.floor((GRID_SIZE - first.word.length) / 2);
+          grid = placeWord(grid, first.word, startRow, startCol, ACROSS);
+          placed.push({ ...first, row: startRow, col: startCol, dir: ACROSS });
+
+          // Place remaining words
+          for (let i = 1; i < shuffled.length && placed.length < target; i++) {
+            const w = shuffled[i];
+            const placements = findPlacements(grid, w.word, placed);
+            if (placements.length === 0) continue;
+            // Pick placement that maximises intersections (most constrained = best crossword)
+            const pick =
+              placements[
+                Math.floor(Math.random() * Math.min(placements.length, 3))
+              ];
+            grid = placeWord(grid, w.word, pick.row, pick.col, pick.dir);
+            placed.push({ ...w, row: pick.row, col: pick.col, dir: pick.dir });
+          }
+
+          if (!best || placed.length > best.placed.length) {
+            best = { grid, placed };
+          }
+          if (best.placed.length >= target) break;
+        }
+
+        return best;
+      }
+
+      const result = buildCrossword(candidates, 14);
+      const { grid, placed } = result;
+
+      // ── 4. CROP GRID ────────────────────────────────────────────────────────
+      let minR = GRID_SIZE,
+        maxR = 0,
+        minC = GRID_SIZE,
+        maxC = 0;
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          if (grid[r][c] !== null) {
+            minR = Math.min(minR, r);
+            maxR = Math.max(maxR, r);
+            minC = Math.min(minC, c);
+            maxC = Math.max(maxC, c);
+          }
+        }
+      }
+      // add 1-cell border
+      minR = Math.max(0, minR - 1);
+      maxR = Math.min(GRID_SIZE - 1, maxR + 1);
+      minC = Math.max(0, minC - 1);
+      maxC = Math.min(GRID_SIZE - 1, maxC + 1);
+
+      const rows = maxR - minR + 1;
+      const cols = maxC - minC + 1;
+
+      // Adjust placed word coordinates
+      placed.forEach((w) => {
+        w.row -= minR;
+        w.col -= minC;
+      });
+      const cropped = grid
+        .slice(minR, maxR + 1)
+        .map((r) => r.slice(minC, maxC + 1));
+
+      // ── 5. NUMBER CELLS ─────────────────────────────────────────────────────
+      // Standard crossword numbering: top-left of each word
+      const cellNumbers = Array.from({ length: rows }, () =>
+        Array(cols).fill(0),
+      );
+      let counter = 1;
+      // Collect start cells
+      const startCells = new Map(); // "r,c" -> number
+
+      // Sort placed words by row then col for consistent numbering
+      const sorted = [...placed].sort((a, b) =>
+        a.row !== b.row ? a.row - b.row : a.col - b.col,
+      );
+      // But we need to number by grid position, not word order
+      // Scan grid top-to-bottom, left-to-right
+      const needsNumber = new Set();
+      for (const w of placed) {
+        needsNumber.add(`${w.row},${w.col}`);
+      }
+
+      // Assign numbers by scanning
+      const posToNum = new Map();
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (needsNumber.has(`${r},${c}`)) {
+            posToNum.set(`${r},${c}`, counter++);
+          }
+        }
+      }
+
+      placed.forEach((w) => {
+        w.number = posToNum.get(`${w.row},${w.col}`);
+      });
+
+      const acrossWords = placed
+        .filter((w) => w.dir === ACROSS)
+        .sort((a, b) => a.number - b.number);
+      const downWords = placed
+        .filter((w) => w.dir === DOWN)
+        .sort((a, b) => a.number - b.number);
+
+      // ── 6. RENDER GRID ──────────────────────────────────────────────────────
+      const table = document.createElement("table");
+      table.id = "crossword-grid";
+      const tbody = document.createElement("tbody");
+
+      // Build cell data
+      const cellData = Array.from({ length: rows }, (_, r) =>
+        Array.from({ length: cols }, (_, c) => ({
+          letter: cropped[r][c],
+          number: posToNum.get(`${r},${c}`) || 0,
+          userLetter: "",
+          td: null,
+        })),
+      );
+
+      for (let r = 0; r < rows; r++) {
+        const tr = document.createElement("tr");
+        for (let c = 0; c < cols; c++) {
+          const td = document.createElement("td");
+          const cell = cellData[r][c];
+          cell.td = td;
+
+          if (cell.letter === null) {
+            td.classList.add("black");
+          } else {
+            if (cell.number) {
+              const num = document.createElement("span");
+              num.className = "cell-number";
+              num.textContent = cell.number;
+              td.appendChild(num);
+            }
+            const letterDiv = document.createElement("div");
+            letterDiv.className = "cell-letter";
+            letterDiv.id = `cell-${r}-${c}`;
+            td.appendChild(letterDiv);
+            td.addEventListener("click", () => onCellClick(r, c));
+          }
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      document.getElementById("grid-container").appendChild(table);
+
+      // ── 7. RENDER CLUES ─────────────────────────────────────────────────────
+      function renderClues(words, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "";
+        words.forEach((w) => {
+          const div = document.createElement("div");
+          div.className = "clue-item";
+          div.id = `clue-${w.dir}-${w.number}`;
+          div.innerHTML = `<span class="clue-num">${w.number}</span><span class="clue-text">${w.clue}</span>`;
+          div.addEventListener("click", () => selectWord(w));
+          container.appendChild(div);
+        });
+      }
+
+      renderClues(acrossWords, "clues-across");
+      renderClues(downWords, "clues-down");
+
+      // ── 8. SELECTION & INPUT ────────────────────────────────────────────────
+      let activeWord = null;
+      let activeRow = -1;
+      let activeCol = -1;
+
+      function getWordAt(r, c, preferDir) {
+        const words = placed.filter((w) => {
+          if (w.dir === ACROSS)
+            return w.row === r && c >= w.col && c < w.col + w.word.length;
+          else return w.col === c && r >= w.row && r < w.row + w.word.length;
+        });
+        if (words.length === 0) return null;
+        if (words.length === 1) return words[0];
+        // If cell is in both across & down, toggle
+        const pref = words.find((w) => w.dir === preferDir);
+        return pref || words[0];
+      }
+
+      function highlightWord(word) {
+        // Clear all
+        for (let r = 0; r < rows; r++)
+          for (let c = 0; c < cols; c++) {
+            const cell = cellData[r][c];
+            if (
+              cell.td &&
+              !cell.td.classList.contains("black") &&
+              !cell.td.classList.contains("correct")
+            ) {
+              cell.td.classList.remove("active-word", "active-cell");
+            }
+          }
+        // Clear clue highlights
+        document
+          .querySelectorAll(".clue-item")
+          .forEach((el) => el.classList.remove("active"));
+
+        if (!word) return;
+
+        for (let i = 0; i < word.word.length; i++) {
+          const r = word.dir === ACROSS ? word.row : word.row + i;
+          const c = word.dir === ACROSS ? word.col + i : word.col;
+          if (!cellData[r][c].td.classList.contains("correct"))
+            cellData[r][c].td.classList.add("active-word");
+        }
+
+        const clueEl = document.getElementById(
+          `clue-${word.dir}-${word.number}`,
+        );
+        if (clueEl) {
+          clueEl.classList.add("active");
+          clueEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }
+
+      function setActiveCell(r, c) {
+        if (cellData[r][c].td) {
+          // Remove previous active cell highlight
+          for (let rr = 0; rr < rows; rr++)
+            for (let cc = 0; cc < cols; cc++)
+              cellData[rr][cc].td &&
+                cellData[rr][cc].td.classList.remove("active-cell");
+
+          if (!cellData[r][c].td.classList.contains("correct"))
+            cellData[r][c].td.classList.add("active-cell");
+        }
+        activeRow = r;
+        activeCol = c;
+        hiddenInput.focus();
+      }
+
+      function selectWord(word, startR, startC) {
+        activeWord = word;
+        const r = startR !== undefined ? startR : word.row;
+        const c = startC !== undefined ? startC : word.col;
+        highlightWord(word);
+        setActiveCell(r, c);
+        document.getElementById("hidden-input").focus();
+      }
+
+      function onCellClick(r, c) {
+        if (cellData[r][c].letter === null) return;
+
+        let preferDir = ACROSS;
+        if (activeWord && activeRow === r && activeCol === c) {
+          // same cell clicked again — toggle direction
+          preferDir = activeWord.dir === ACROSS ? DOWN : ACROSS;
+        } else if (activeWord) {
+          preferDir = activeWord.dir;
+        }
+
+        const word = getWordAt(r, c, preferDir);
+        if (word) selectWord(word, r, c);
+      }
+
+      // Advance cursor to next empty cell in active word
+      function advanceCursor() {
+        if (!activeWord) return;
+        const len = activeWord.word.length;
+        for (let step = 1; step <= len; step++) {
+          const idx =
+            activeWord.dir === ACROSS
+              ? activeCol - activeWord.col + step
+              : activeRow - activeWord.row + step;
+          if (idx >= len) break;
+          const r =
+            activeWord.dir === ACROSS ? activeWord.row : activeWord.row + idx;
+          const c =
+            activeWord.dir === ACROSS ? activeWord.col + idx : activeWord.col;
+          if (
+            !cellData[r][c].td.classList.contains("correct") ||
+            cellData[r][c].userLetter === ""
+          ) {
+            setActiveCell(r, c);
+            return;
+          }
+        }
+        // If all filled, just move to next
+        const idx =
+          activeWord.dir === ACROSS
+            ? activeCol - activeWord.col + 1
+            : activeRow - activeWord.row + 1;
+        if (idx < len) {
+          const r =
+            activeWord.dir === ACROSS ? activeWord.row : activeWord.row + idx;
+          const c =
+            activeWord.dir === ACROSS ? activeWord.col + idx : activeWord.col;
+          setActiveCell(r, c);
+        }
+      }
+
+      function retreatCursor() {
+        if (!activeWord) return;
+        const idx =
+          activeWord.dir === ACROSS
+            ? activeCol - activeWord.col - 1
+            : activeRow - activeWord.row - 1;
+        if (idx < 0) return;
+        const r =
+          activeWord.dir === ACROSS ? activeWord.row : activeWord.row + idx;
+        const c =
+          activeWord.dir === ACROSS ? activeWord.col + idx : activeWord.col;
+        setActiveCell(r, c);
+      }
+
+      function checkWordComplete(word) {
+        for (let i = 0; i < word.word.length; i++) {
+          const r = word.dir === ACROSS ? word.row : word.row + i;
+          const c = word.dir === ACROSS ? word.col + i : word.col;
+          if (cellData[r][c].userLetter !== word.word[i]) return false;
+        }
+        return true;
+      }
+
+      function markWordCorrect(word) {
+        for (let i = 0; i < word.word.length; i++) {
+          const r = word.dir === ACROSS ? word.row : word.row + i;
+          const c = word.dir === ACROSS ? word.col + i : word.col;
+          cellData[r][c].td.classList.remove("active-word", "active-cell");
+          cellData[r][c].td.classList.add("correct");
+        }
+        const clueEl = document.getElementById(
+          `clue-${word.dir}-${word.number}`,
+        );
+        if (clueEl) clueEl.classList.add("correct");
+      }
+
+      function checkAllComplete() {
+        const allCorrect = placed.every((w) => checkWordComplete(w));
+        if (allCorrect) {
+          document.getElementById("congrats").style.display = "block";
+          document
+            .getElementById("congrats")
+            .scrollIntoView({ behavior: "smooth" });
+        }
+      }
+
+      function typeLetter(letter) {
+        if (!activeWord || activeRow < 0 || activeCol < 0) return;
+        const cell = cellData[activeRow][activeCol];
+        if (!cell || cell.letter === null) return;
+        if (cell.td.classList.contains("correct")) {
+          advanceCursor();
+          return;
+        }
+
+        cell.userLetter = letter;
+        const div = document.getElementById(`cell-${activeRow}-${activeCol}`);
+        if (div) div.textContent = letter;
+
+        // Check if the word is complete and correct
+        if (checkWordComplete(activeWord)) {
+          markWordCorrect(activeWord);
+          // Also check any crossing words
+          placed.forEach((w) => {
+            if (w !== activeWord && checkWordComplete(w)) markWordCorrect(w);
+          });
+          checkAllComplete();
+        }
+
+        advanceCursor();
+      }
+
+      function deleteLetter() {
+        if (!activeWord || activeRow < 0 || activeCol < 0) return;
+        const cell = cellData[activeRow][activeCol];
+        if (!cell || cell.letter === null) return;
+        if (cell.td.classList.contains("correct")) {
+          retreatCursor();
+          return;
+        }
+
+        if (cell.userLetter !== "") {
+          cell.userLetter = "";
+          const div = document.getElementById(`cell-${activeRow}-${activeCol}`);
+          if (div) div.textContent = "";
+        } else {
+          retreatCursor();
+          const prev = cellData[activeRow][activeCol];
+          if (prev && !prev.td.classList.contains("correct")) {
+            prev.userLetter = "";
+            const div = document.getElementById(
+              `cell-${activeRow}-${activeCol}`,
+            );
+            if (div) div.textContent = "";
+          }
+        }
+      }
+
+      // ── 9. KEYBOARD INPUT ───────────────────────────────────────────────────
+      const hiddenInput = document.getElementById("hidden-input");
+
+      // Desktop keyboard
+      document.addEventListener("keydown", (e) => {
+        if (!activeWord) return;
+
+        if (e.key === "Backspace" || e.key === "Delete") {
+          e.preventDefault();
+          deleteLetter();
+          return;
+        }
+        if (
+          e.key === "ArrowRight" ||
+          e.key === "ArrowLeft" ||
+          e.key === "ArrowUp" ||
+          e.key === "ArrowDown"
+        ) {
+          e.preventDefault();
+          if (e.key === "ArrowRight" || e.key === "ArrowDown") advanceCursor();
+          else retreatCursor();
+          return;
+        }
+        if (e.key === "Tab") {
+          e.preventDefault();
+          // Jump to next word
+          const all = [...acrossWords, ...downWords];
+          const idx = all.indexOf(activeWord);
+          const next = all[(idx + 1) % all.length];
+          selectWord(next);
+          return;
+        }
+      });
+
+      // Mobile: intercept hidden input
+      hiddenInput.addEventListener("input", (e) => {
+        const val = hiddenInput.value;
+        hiddenInput.value = "";
+        if (!val) return;
+        const letter = normalise(val[val.length - 1]);
+        if (letter) typeLetter(letter);
+      });
+
+      hiddenInput.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace") deleteLetter();
+      });
+
+      // Select first word on load
+      if (acrossWords.length > 0) selectWord(acrossWords[0]);
+    </script>
   </body>
 </html>
