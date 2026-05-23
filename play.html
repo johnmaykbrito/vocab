@@ -850,9 +850,6 @@
         const allCorrect = placed.every((w) => checkWordComplete(w));
         if (allCorrect) {
           document.getElementById("congrats").style.display = "block";
-          document
-            .getElementById("congrats")
-            .scrollIntoView({ behavior: "smooth" });
           if (!muted) {
             const audio = document.getElementById("fanfare");
             audio.currentTime = 0;
