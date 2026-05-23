@@ -138,74 +138,45 @@
         pointer-events: none;
       }
 
-      /* ── clues ── */
-      .clues-wrap {
+      /* ── hint box ── */
+      #hint-box {
         width: 100%;
         max-width: 560px;
-      }
-
-      @media (min-width: 700px) {
-        .clues-wrap {
-          flex: 1 1 260px;
-          min-width: 220px;
-          max-width: 360px;
-        }
-      }
-
-      .clue-section {
-        margin-bottom: 1.4rem;
-      }
-
-      .clue-section h2 {
-        font-family: "Courier New", monospace;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #888780;
-        margin-bottom: 0.6rem;
-        padding-bottom: 4px;
-        border-bottom: 1px solid #ddd9d0;
-      }
-
-      .clue-item {
+        background: #fff;
+        border: 1px solid #ddd9d0;
+        border-radius: 10px;
+        padding: 0.9rem 1.1rem;
         display: flex;
-        gap: 8px;
-        padding: 5px 6px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background 0.15s;
-        margin-bottom: 2px;
+        gap: 0.7rem;
+        align-items: flex-start;
+        min-height: 64px;
       }
 
-      .clue-item:hover {
-        background: #ece9e2;
-      }
-      .clue-item.active {
-        background: #e6f1fb;
-      }
-      .clue-item.correct {
-        background: #e1f5ee;
-        color: #0f6e56;
-      }
-
-      .clue-num {
+      #hint-number {
         font-family: "Courier New", monospace;
         font-size: 11px;
         font-weight: 700;
-        min-width: 22px;
         color: #888780;
-        padding-top: 1px;
+        white-space: nowrap;
+        padding-top: 2px;
+        min-width: 28px;
       }
 
-      .clue-text {
-        font-size: 13px;
-        line-height: 1.5;
+      #hint-text {
+        font-size: 18px;
+        line-height: 1.55;
         color: #3a3a38;
       }
 
-      .clue-item.correct .clue-text {
-        color: #0f6e56;
+      #hint-dir {
+        font-family: "Courier New", monospace;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #aaa8a0;
+        white-space: nowrap;
+        padding-top: 3px;
       }
 
       /* ── congrats ── */
@@ -221,7 +192,57 @@
         letter-spacing: 0.04em;
       }
 
-      /* ── new game btn ── */
+      /* ── help button ── */
+      #btn-help {
+        display: block;
+        margin: 0.8rem auto 0;
+        font-family: "Courier New", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 7px 20px;
+        border-radius: 99px;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        background: transparent;
+        color: #888780;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      #btn-help:hover {
+        border-color: rgba(0, 0, 0, 0.3);
+        color: #3a3a38;
+      }
+      #btn-help:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #btn-help {
+          color: #888780;
+        }
+        #btn-help:hover {
+          color: #c8c6c0;
+        }
+      }
+      /* ── mute button ── */
+      #btn-mute {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        font-size: 20px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        opacity: 0.5;
+        transition: opacity 0.2s;
+        z-index: 100;
+      }
+      #btn-mute:hover {
+        opacity: 1;
+      }
+
       #btn-new {
         display: block;
         margin: 1.5rem auto 0;
@@ -286,25 +307,12 @@
         .cell-number {
           color: #aaa;
         }
-        .clue-item:hover {
+        #hint-box {
           background: #2a2a28;
+          border-color: #444;
         }
-        .clue-item.active {
-          background: #0c447c;
-        }
-        .clue-item.correct {
-          background: #085041;
-          color: #9fe1cb;
-        }
-        .clue-section h2 {
-          color: #888780;
-          border-color: #333;
-        }
-        .clue-text {
+        #hint-text {
           color: #c8c6c0;
-        }
-        .clue-item.correct .clue-text {
-          color: #9fe1cb;
         }
         #congrats {
           background: #085041;
@@ -318,6 +326,8 @@
     <p class="subtitle" id="subtitle">Carregando…</p>
     <div id="error-msg"></div>
 
+    <button id="btn-mute" onclick="toggleMute()" title="Silenciar">🔊</button>
+    <audio id="fanfare" src="trompeta-corneta.mp3" preload="auto"></audio>
     <input
       id="hidden-input"
       type="text"
@@ -329,18 +339,14 @@
 
     <div class="game-wrap">
       <div id="grid-container"></div>
-      <div class="clues-wrap">
-        <div class="clue-section">
-          <h2>Horizontal</h2>
-          <div id="clues-across"></div>
-        </div>
-        <div class="clue-section">
-          <h2>Vertical</h2>
-          <div id="clues-down"></div>
-        </div>
+      <div id="hint-box">
+        <span id="hint-number"></span>
+        <span id="hint-text">Selecione uma palavra no puzzle.</span>
+        <span id="hint-dir"></span>
       </div>
     </div>
 
+    <button id="btn-help" onclick="revealNextLetter()">💡 Revelar letra</button>
     <div id="congrats">🎉 Parabéns — puzzle completo!</div>
     <button id="btn-new" onclick="location.reload()">↺ Novo puzzle</button>
 
@@ -671,23 +677,6 @@
       table.appendChild(tbody);
       document.getElementById("grid-container").appendChild(table);
 
-      // ── 7. RENDER CLUES ─────────────────────────────────────────────────────
-      function renderClues(words, containerId) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = "";
-        words.forEach((w) => {
-          const div = document.createElement("div");
-          div.className = "clue-item";
-          div.id = `clue-${w.dir}-${w.number}`;
-          div.innerHTML = `<span class="clue-num">${w.number}</span><span class="clue-text">${w.clue}</span>`;
-          div.addEventListener("click", () => selectWord(w));
-          container.appendChild(div);
-        });
-      }
-
-      renderClues(acrossWords, "clues-across");
-      renderClues(downWords, "clues-down");
-
       // ── 8. SELECTION & INPUT ────────────────────────────────────────────────
       let activeWord = null;
       let activeRow = -1;
@@ -707,7 +696,7 @@
       }
 
       function highlightWord(word) {
-        // Clear all
+        // Clear all cell highlights
         for (let r = 0; r < rows; r++)
           for (let c = 0; c < cols; c++) {
             const cell = cellData[r][c];
@@ -719,13 +708,16 @@
               cell.td.classList.remove("active-word", "active-cell");
             }
           }
-        // Clear clue highlights
-        document
-          .querySelectorAll(".clue-item")
-          .forEach((el) => el.classList.remove("active"));
 
-        if (!word) return;
+        if (!word) {
+          document.getElementById("hint-number").textContent = "";
+          document.getElementById("hint-text").textContent =
+            "Selecione uma palavra no puzzle.";
+          document.getElementById("hint-dir").textContent = "";
+          return;
+        }
 
+        // Highlight word cells
         for (let i = 0; i < word.word.length; i++) {
           const r = word.dir === ACROSS ? word.row : word.row + i;
           const c = word.dir === ACROSS ? word.col + i : word.col;
@@ -733,13 +725,11 @@
             cellData[r][c].td.classList.add("active-word");
         }
 
-        const clueEl = document.getElementById(
-          `clue-${word.dir}-${word.number}`,
-        );
-        if (clueEl) {
-          clueEl.classList.add("active");
-          clueEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        }
+        // Update hint box
+        const dirLabel = word.dir === ACROSS ? "→" : "↓";
+        document.getElementById("hint-number").textContent = `${word.number}`;
+        document.getElementById("hint-text").textContent = word.clue;
+        document.getElementById("hint-dir").textContent = dirLabel;
       }
 
       function setActiveCell(r, c) {
@@ -848,10 +838,12 @@
           cellData[r][c].td.classList.remove("active-word", "active-cell");
           cellData[r][c].td.classList.add("correct");
         }
-        const clueEl = document.getElementById(
-          `clue-${word.dir}-${word.number}`,
-        );
-        if (clueEl) clueEl.classList.add("correct");
+      }
+
+      let muted = false;
+      function toggleMute() {
+        muted = !muted;
+        document.getElementById("btn-mute").textContent = muted ? "🔇" : "🔊";
       }
 
       function checkAllComplete() {
@@ -861,6 +853,11 @@
           document
             .getElementById("congrats")
             .scrollIntoView({ behavior: "smooth" });
+          if (!muted) {
+            const audio = document.getElementById("fanfare");
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+          }
         }
       }
 
@@ -916,18 +913,44 @@
         }
       }
 
+      function revealNextLetter() {
+        if (!activeWord) return;
+        const len = activeWord.word.length;
+        for (let i = 0; i < len; i++) {
+          const r =
+            activeWord.dir === ACROSS ? activeWord.row : activeWord.row + i;
+          const c =
+            activeWord.dir === ACROSS ? activeWord.col + i : activeWord.col;
+          const cell = cellData[r][c];
+          if (cell.td.classList.contains("correct")) continue;
+          // Reveal and immediately lock this cell as correct
+          cell.userLetter = activeWord.word[i];
+          const div = document.getElementById(`cell-${r}-${c}`);
+          if (div) div.textContent = activeWord.word[i];
+          cell.td.classList.remove("active-word", "active-cell");
+          cell.td.classList.add("correct");
+          // Check if word / puzzle is now complete
+          if (checkWordComplete(activeWord)) {
+            markWordCorrect(activeWord);
+            placed.forEach((w) => {
+              if (w !== activeWord && checkWordComplete(w)) markWordCorrect(w);
+            });
+            checkAllComplete();
+          } else {
+            // Move cursor to the next unrevealed cell
+            advanceCursor();
+          }
+          return;
+        }
+      }
+
       // ── 9. KEYBOARD INPUT ───────────────────────────────────────────────────
       const hiddenInput = document.getElementById("hidden-input");
 
-      // Desktop keyboard
+      // Desktop keyboard — navigation only; letters and backspace handled via hidden input
       document.addEventListener("keydown", (e) => {
         if (!activeWord) return;
 
-        if (e.key === "Backspace" || e.key === "Delete") {
-          e.preventDefault();
-          deleteLetter();
-          return;
-        }
         if (
           e.key === "ArrowRight" ||
           e.key === "ArrowLeft" ||
@@ -941,7 +964,6 @@
         }
         if (e.key === "Tab") {
           e.preventDefault();
-          // Jump to next word
           const all = [...acrossWords, ...downWords];
           const idx = all.indexOf(activeWord);
           const next = all[(idx + 1) % all.length];
